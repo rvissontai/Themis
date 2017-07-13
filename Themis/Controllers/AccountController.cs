@@ -58,7 +58,7 @@ namespace Themis.Controllers
         public ActionResult Login(string returnUrl)
         {
             ViewBag.ReturnUrl = returnUrl;
-            return View();
+            return View("Login", "_Login");
         }
 
         //
@@ -87,7 +87,7 @@ namespace Themis.Controllers
                 case SignInStatus.Failure:
                 default:
                     ModelState.AddModelError("", "Invalid login attempt.");
-                    return View(model);
+                    return View("Login", "_Login", model);
             }
         }
 
@@ -139,7 +139,7 @@ namespace Themis.Controllers
         [AllowAnonymous]
         public ActionResult Register()
         {
-            return View();
+            return View("Register", "_Login");
         }
 
         //
@@ -151,21 +151,40 @@ namespace Themis.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = new ApplicationUser { UserName = model.Email, Email = model.Email };
-                var result = await UserManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
-                {
-                    await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
-                    
-                    // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
-                    // Send an email with this link
-                    // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
-                    // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
-                    // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
+                var user = new ApplicationUser {
+                    NomeCompleto = model.NomeCompleto,
+                    UserName = model.Email,
+                    Email = model.Email,
+                    Bloco = model.Bloco,
+                    Apto = model.Apto
+                };
 
-                    return RedirectToAction("Index", "Home");
+                try
+                {
+                    var result = await UserManager.CreateAsync(user, model.Password);
+                    if (result.Succeeded)
+                    {
+                        await SignInManager.SignInAsync(user, isPersistent: false, rememberBrowser: false);
+
+                        // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=320771
+                        // Send an email with this link
+                        // string code = await UserManager.GenerateEmailConfirmationTokenAsync(user.Id);
+                        // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
+                        // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
+
+                        AddErrors(result);
+
+                        return RedirectToAction("Index", "Home");
+                    }
                 }
-                AddErrors(result);
+                catch (Exception ex)
+                {
+
+                    return Content(ex.ToString());
+                }
+
+                
+                
             }
 
             // If we got this far, something failed, redisplay form
